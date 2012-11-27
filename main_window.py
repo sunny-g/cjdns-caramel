@@ -14,6 +14,7 @@ class MainWindow(Gtk.Window):
 		self.set_size_request(500, 400)
 
 		self.infobar = self.build_infobar()
+		self.infobar_label = self.infobar.get_content_area().get_children()[0]
 
 		inner_vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 15)
 		inner_vbox.set_border_width(10)
@@ -41,8 +42,8 @@ class MainWindow(Gtk.Window):
 	def build_infobar(self):
 		infobar = Gtk.InfoBar()
 		infobar.add_button("RPC Settings", Gtk.ResponseType.OK)
-		infobar.get_content_area().add(Gtk.Label("Password required to configure CJDNS"))
-		infobar.connect("response", 
+		infobar.get_content_area().add(Gtk.Label())
+		infobar.connect("response",
 			lambda sender, response: self.open_rpc_settings(sender)
 		)
 		return infobar
@@ -51,6 +52,7 @@ class MainWindow(Gtk.Window):
 		if 'password' in self.app.rpc_settings:
 			self.infobar.hide()
 		else:
+			self.infobar_label.set_text("Password required to configure CJDNS")
 			self.infobar.show()
 
 	def build_menubar(self):
@@ -150,7 +152,7 @@ class MainWindow(Gtk.Window):
 			icon = Gtk.STOCK_NO
 
 		self.status_icon.set_from_stock(icon, Gtk.IconSize.MENU)
-		self.status_label.set_markup('<b>' + main_status + '</b>')
+		self.status_label.set_markup('<b>' + (main_status or '') + '</b>')
 
-		peers_markup = "<span size='small'>" + sub_status + "</span>"
+		peers_markup = "<span size='small'>" + (sub_status or '') + "</span>"
 		self.peers_label.set_markup(peers_markup)

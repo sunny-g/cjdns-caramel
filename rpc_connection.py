@@ -3,6 +3,9 @@ import select
 import hashlib
 import bencoding
 
+class AuthFailed(Exception):
+	pass
+
 class RpcConnection:
 	def __init__(self, host='localhost', port=11234, password=None):
 		self.host = host
@@ -46,7 +49,13 @@ class RpcConnection:
 		try:
 			self.sock.send(query)
 			response = self.sock.recv(1024 * 1024)
-			return bencoding.decode(response)
+			response = bencoding.decode(response)
+
+			if self.check_auth_failed(response):
+				raise AuthFailed()
+			else:
+				return response
+
 		except socket.error:
 			self.connected = False
 			self.broken = True
@@ -74,6 +83,9 @@ class RpcConnection:
 		dict['hash'] = hashlib.sha256(request).hexdigest()
 
 		return dict
+
+	def check_auth_failed(self, response):
+		return isinstance(response, dict) and ('error' in response) and (response['error'] == 'Auth failed.')
 
 	def ping(self):
 		try:

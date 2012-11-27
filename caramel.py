@@ -7,7 +7,7 @@ from gi.repository import GLib
 from gi.repository import Gtk
 from main_window import MainWindow
 
-from rpc_connection import RpcConnection
+from rpc_connection import *
 import gnome_keyring as GnomeKeyring
 
 class CaramelApplication(Gtk.Application):
@@ -78,8 +78,14 @@ class CaramelApplication(Gtk.Application):
 			if self.rpc_conn.ping():
 				connected = True
 				main_status = "CJDNS is running"
-				unique_nodes = self.rpc_conn.count_unique_nodes()
-				sub_status = "{0} found".format(pluralize(unique_nodes, "node", "nodes"))
+
+				if self.rpc_settings.get('password') is not None:
+					try:
+						unique_nodes = self.rpc_conn.count_unique_nodes()
+						sub_status = "{0} found".format(pluralize(unique_nodes, "node", "nodes"))
+					except AuthFailed:
+						self.window.infobar_label.set_text("Password rejected by CJDNS")
+						self.window.infobar.show()
 			else:
 				sub_status = "Ping was not returned"
 
