@@ -72,22 +72,25 @@ class CaramelApplication(Gtk.Application):
 		main_status = "CJDNS is stopped"
 		sub_status = None
 
-		if self.rpc_conn.broken:
-			sub_status = "Could not connect to port {0}".format(self.rpc_conn.port)
-		else:
-			if self.rpc_conn.ping():
-				connected = True
-				main_status = "CJDNS is running"
+		try:
+			if self.rpc_conn.broken:
+				raise ConnectionError()
+			else:
+				if not self.rpc_conn.ping():
+					sub_status = "Ping was not returned"
+				else:
+					connected = True
+					main_status = "CJDNS is running"
 
-				if self.rpc_settings.get('password') is not None:
-					try:
+					if self.rpc_settings.get('password') is not None:
 						unique_nodes = self.rpc_conn.count_unique_nodes()
 						sub_status = "{0} found".format(pluralize(unique_nodes, "node", "nodes"))
-					except AuthFailed:
-						self.window.infobar_label.set_text("Password rejected by CJDNS")
-						self.window.infobar.show()
-			else:
-				sub_status = "Ping was not returned"
+					
+		except ConnectionError:
+			sub_status = "Could not connect to port {0}".format(self.rpc_conn.port)
+		except AuthFailed:
+			self.window.infobar_label.set_text("Password rejected by CJDNS")
+			self.window.infobar.show()
 
 		self.window.update_status_page(connected, main_status, sub_status)
 

@@ -6,6 +6,9 @@ import bencoding
 class AuthFailed(Exception):
 	pass
 
+class ConnectionError(Exception):
+	pass
+
 class RpcConnection:
 	def __init__(self, host='localhost', port=11234, password=None):
 		self.host = host
@@ -48,7 +51,10 @@ class RpcConnection:
 
 		try:
 			self.sock.send(query)
+
 			response = self.sock.recv(1024 * 1024)
+			if len(response) < 1:
+				raise ConnectionError()
 			response = bencoding.decode(response)
 
 			if self.check_auth_failed(response):
@@ -56,10 +62,10 @@ class RpcConnection:
 			else:
 				return response
 
-		except socket.error:
+		except (socket.error, ConnectionError):
 			self.connected = False
 			self.broken = True
-			return None
+			raise ConnectionError()
 		except bencoding.DecodeError:
 			return None
 
