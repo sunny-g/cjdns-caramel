@@ -81,10 +81,10 @@ class MainWindow(Gtk.Window):
 	def build_status_page(self):
 		self.status_icon = Gtk.Image.new_from_stock(Gtk.STOCK_NO, Gtk.IconSize.MENU)
 
-		self.status_label = Gtk.Label("<b>Connecting...</b>")
+		self.status_label = Gtk.Label()
 		self.status_label.set_use_markup(True)
 
-		self.peers_label = Gtk.Label("<span size='small'>16 peers connected</span>")
+		self.peers_label = Gtk.Label()
 		self.peers_label.set_use_markup(True)
 
 		self.status_label.set_alignment(0, 0.5)
@@ -144,9 +144,9 @@ class MainWindow(Gtk.Window):
 		self.update_infobar()
 
 	def update_status_page(self, connected, node_count=None):
-		def pluralize(count, word):
+		def pluralize(count, word, plural):
 			if count != 1:
-				word = word + 's'
+				word = plural
 			return "{0} {1}".format(count, word)
 
 		if connected:
@@ -159,5 +159,5 @@ class MainWindow(Gtk.Window):
 		self.status_icon.set_from_stock(icon, Gtk.IconSize.MENU)
 		self.status_label.set_markup('<b>' + label + '</b>')
 
-		peers_markup = "<span size='small'>" + pluralize(node_count, "node") + " in routing table</span>"
+		peers_markup = "<span size='small'>" + pluralize(node_count, "entry", "entries") + " in routing table</span>"
 		self.peers_label.set_markup(peers_markup)
