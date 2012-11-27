@@ -6,7 +6,7 @@ A graphical user interface for managing [CJDNS](https://github.com/cjdelisle/cjd
 Screenshots
 -----------
 
-![Screenshot of main window](http://cloud.github.com/downloads/duncanpk/cjdns-caramel/screenshot-1.png)
+![Screenshot of main window](http://cloud.github.com/downloads/duncanpk/cjdns-caramel/screenshot-2.png)
 
 Dependencies
 ------------
