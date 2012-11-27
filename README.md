@@ -6,6 +6,8 @@ A graphical user interface for managing [CJDNS](https://github.com/cjdelisle/cjd
 Screenshots
 -----------
 
+![Screenshot of main window](http://cloud.github.com/downloads/duncanpk/cjdns-caramel/screenshot-1.png)
+
 Dependencies
 ------------
 
@@ -13,8 +15,8 @@ Caramel requires Python 3 and bindings for gobject-introspection:
 
     sudo apt-get install python3 python3-gi
 
-Install
--------
+Usage
+-----
 
 Just clone this repository and run:
 
