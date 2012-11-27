@@ -60,18 +60,30 @@ class CaramelApplication(Gtk.Application):
 		return self.rpc_conn.connect()
 
 	def update_status(self):
+		def pluralize(count, word, plural):
+			if count != 1:
+				word = plural
+			return "{0} {1}".format(count, word)
+
 		if self.rpc_conn.broken:
 			self.reset_connection()
 
-		connected = self.rpc_conn.ping()
+		connected = False
+		main_status = "CJDNS is stopped"
+		sub_status = None
 
-		try:
-			routes = self.rpc_conn.dump_node_table()['routingTable']
-			node_count = len(routes)
-		except:
-			node_count = None
+		if self.rpc_conn.broken:
+			sub_status = "Could not connect to port {0}".format(self.rpc_conn.port)
+		else:
+			if self.rpc_conn.ping():
+				connected = True
+				main_status = "CJDNS is running"
+				unique_nodes = self.rpc_conn.count_unique_nodes()
+				sub_status = "{0} found".format(pluralize(unique_nodes, "node", "nodes"))
+			else:
+				sub_status = "Ping was not returned"
 
-		self.window.update_status_page(connected = connected, node_count = node_count)
+		self.window.update_status_page(connected, main_status, sub_status)
 
 		return True
 

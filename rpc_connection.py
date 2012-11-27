@@ -1,4 +1,5 @@
 import socket
+import select
 import hashlib
 import bencoding
 
@@ -9,6 +10,7 @@ class RpcConnection:
 		self.password = password
 
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock.settimeout(1.0)
 		self.connected = False
 		self.broken = False
 
@@ -25,6 +27,8 @@ class RpcConnection:
 	def close(self):
 		try:
 			self.sock.shutdown(socket.SHUT_RDWR)
+			self.connected = False
+			self.broken = True
 		except socket.error:
 			pass
 
@@ -42,46 +46,13 @@ class RpcConnection:
 		try:
 			self.sock.send(query)
 			response = self.sock.recv(1024 * 1024)
+			return bencoding.decode(response)
 		except socket.error:
 			self.connected = False
 			self.broken = True
 			return None
-		else:
-			return bencoding.decode(response)
-
-	def ping(self):
-		try:
-			return self.call('ping')['q'] == 'pong'
-		except (TypeError, KeyError):
-			return False
-
-	def cookie(self):
-		return self.call('cookie')
-
-	def memory(self):
-		return self.call('memory')
-
-	def dump_node_table(self, page=None):
-		if page is None:
-			page = 0
-			routing_table = []
-			response = {'more': 1}
-
-			while 'more' in response:
-				response = self.dump_node_table(page)
-
-				if response is None:
-					return None
-
-				routing_table.extend(response['routingTable'])
-				page += 1
-
-			return {'routingTable': routing_table}
-		else:
-			return self.call('NodeStore_dumpTable', args={'page': page}, auth=True)
-
-	def ip_tunnel_connections(self):
-		return self.call('IpTunnel_listConnections', auth=True)
+		except bencoding.DecodeError:
+			return None
 
 	def authenticate(self, dict):
 		cookie = self.cookie()
@@ -103,3 +74,40 @@ class RpcConnection:
 		dict['hash'] = hashlib.sha256(request).hexdigest()
 
 		return dict
+
+	def ping(self):
+		try:
+			return self.call('ping')['q'] == 'pong'
+		except (TypeError, KeyError):
+			return False
+
+	def cookie(self):
+		return self.call('cookie')
+
+	def memory(self):
+		return self.call('memory')
+
+	def dump_routing_table(self, page=None):
+		if page is None:
+			page = 0
+			routing_table = []
+			response = {'more': 1}
+
+			while 'more' in response:
+				response = self.dump_routing_table(page)
+
+				if response is None:
+					return None
+
+				routing_table.extend(response['routingTable'])
+				page += 1
+
+			return {'routingTable': routing_table}
+		else:
+			return self.call('NodeStore_dumpTable', args={'page': page}, auth=True)
+
+	def count_unique_nodes(self):
+		routing_table = self.dump_routing_table()
+		if routing_table is not None:
+			nodes = set([route['ip'] for route in routing_table['routingTable']])
+			return len(nodes)

@@ -143,21 +143,14 @@ class MainWindow(Gtk.Window):
 		rpc_dialog.destroy()
 		self.update_infobar()
 
-	def update_status_page(self, connected, node_count=None):
-		def pluralize(count, word, plural):
-			if count != 1:
-				word = plural
-			return "{0} {1}".format(count, word)
-
+	def update_status_page(self, connected, main_status=None, sub_status=None):
 		if connected:
 			icon = Gtk.STOCK_YES
-			label = "CJDNS is running"
 		else:
 			icon = Gtk.STOCK_NO
-			label = "CJDNS is stopped"
 
 		self.status_icon.set_from_stock(icon, Gtk.IconSize.MENU)
-		self.status_label.set_markup('<b>' + label + '</b>')
+		self.status_label.set_markup('<b>' + main_status + '</b>')
 
-		peers_markup = "<span size='small'>" + pluralize(node_count, "entry", "entries") + " in routing table</span>"
+		peers_markup = "<span size='small'>" + sub_status + "</span>"
 		self.peers_label.set_markup(peers_markup)
