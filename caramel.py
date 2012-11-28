@@ -32,7 +32,7 @@ class CaramelApplication(Gtk.Application):
 		# Default settings so we can check for CJDNS even if we don't
 		# know the password yet
 		self.rpc_settings = {'host': '127.0.0.1', 'port': 11234}
-		
+
 		self.config = None
 		config_path = os.path.expanduser("~/.config/cjdroute.conf")
 
@@ -103,6 +103,8 @@ class CaramelApplication(Gtk.Application):
 
 		connected = False
 		authenticated = False
+		configured = self.config is not None
+
 		main_status = "CJDNS is stopped"
 		sub_status = None
 
@@ -133,7 +135,7 @@ class CaramelApplication(Gtk.Application):
 		peers_markup = "<span size='small'>" + (sub_status or '') + "</span>"
 		self.window.peers_label.set_markup(peers_markup)
 
-		self.window.auth_fail_infobar.set_visible(connected and not authenticated)
+		self.window.auth_fail_infobar.set_visible(connected and configured and not authenticated)
 
 		self.window.start_button.set_visible(not connected)
 		self.window.start_button.set_sensitive(self.config is not None)
@@ -155,9 +157,11 @@ class CaramelApplication(Gtk.Application):
 			cjdroute_path = os.path.join(cjdns_path, 'cjdroute')
 
 			if os.path.exists(cjdroute_path):
+				self.window.cjdroute_path_infobar.hide()
 				self.cjdns_path = cjdns_path
 				self.load_config()
-				self.window.cjdroute_path_infobar.hide()
+				self.reset_connection()
+				self.update_status()
 
 		dialog.destroy()
 
