@@ -38,9 +38,10 @@ class RpcConnection:
 
 	def close(self):
 		try:
-			self.sock.shutdown(socket.SHUT_RDWR)
 			self.connected = False
 			self.broken = True
+			self.sock.shutdown(socket.SHUT_RDWR)
+			self.sock.close()
 		except socket.error:
 			pass
 
@@ -124,6 +125,7 @@ class RpcConnection:
 
 		try:
 			self.sock.send(query)
+			self.close()
 		except socket.error:
 			self.connected = False
 			self.broken = True

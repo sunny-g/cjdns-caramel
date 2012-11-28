@@ -76,6 +76,7 @@ class CaramelApplication(Gtk.Application):
 	def stop_cjdns(self):
 		if self.rpc_conn is not None:
 			self.rpc_conn.exit()
+			self.reset_connection()
 			self.update_status()
 
 	def reset_connection(self):
