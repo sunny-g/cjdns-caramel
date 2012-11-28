@@ -83,14 +83,11 @@ class CaramelApplication(Gtk.Application):
 		if self.rpc_conn is not None:
 			self.rpc_conn.close()
 
-		if self.rpc_settings is not None:
-			self.rpc_conn = RpcConnection(
-				self.rpc_settings.get('host'),
-				self.rpc_settings.get('port'),
-				self.rpc_settings.get('password')
-			)
-		else:
-			self.rpc_conn = RpcConnection()
+		self.rpc_conn = RpcConnection(
+			self.rpc_settings.get('host'),
+			self.rpc_settings.get('port'),
+			self.rpc_settings.get('password')
+		)
 
 		return self.rpc_conn.connect()
 
