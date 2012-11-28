@@ -102,10 +102,12 @@ class MainWindow(Gtk.Window):
 		self.start_button = Gtk.Button("Start")
 		self.start_button.set_size_request(80, -1)
 		self.start_button.set_valign(Gtk.Align.START)
+		self.start_button.connect('clicked', lambda sender: self.app.start_cjdns())
 
 		self.stop_button = Gtk.Button("Stop")
 		self.stop_button.set_size_request(80, -1)
 		self.stop_button.set_valign(Gtk.Align.START)
+		self.stop_button.connect('clicked', lambda sender: self.app.stop_cjdns())
 
 		status_grid = Gtk.Grid()
 		status_grid.set_row_spacing(2)

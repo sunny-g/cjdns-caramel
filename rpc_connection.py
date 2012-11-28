@@ -16,7 +16,7 @@ class RpcConnection:
 		self.password = password
 
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.sock.settimeout(1.0)
+		self.sock.settimeout(0.1)
 		self.connected = False
 		self.broken = False
 
@@ -104,6 +104,16 @@ class RpcConnection:
 
 	def memory(self):
 		return self.call('memory')
+
+	def exit(self):
+		dict = self.authenticate({'q': 'Core_exit'})
+		query = bencoding.encode(dict)
+
+		try:
+			self.sock.send(query)
+		except socket.error:
+			self.connected = False
+			self.broken = True
 
 	def dump_routing_table(self, page=None):
 		if page is None:

@@ -42,6 +42,11 @@ class CaramelApplication(Gtk.Application):
 		proc.stdin.write(self.config.dump().encode())
 		proc.stdin.close()
 
+	def stop_cjdns(self):
+		if self.rpc_conn is not None:
+			self.rpc_conn.exit()
+			self.update_status()
+
 	def reset_connection(self):
 		if self.rpc_conn:
 			self.rpc_conn.close()
