@@ -64,6 +64,7 @@ class CaramelApplication(Gtk.Application):
 			self.reset_connection()
 
 		connected = False
+		authenticated = False
 		main_status = "CJDNS is stopped"
 		sub_status = None
 
@@ -79,13 +80,13 @@ class CaramelApplication(Gtk.Application):
 
 					if self.rpc_settings.get('password') is not None:
 						unique_nodes = self.rpc_conn.count_unique_nodes()
+						authenticated = True
 						sub_status = "{0} found".format(pluralize(unique_nodes, "node", "nodes"))
 					
 		except ConnectionError:
 			sub_status = "Could not connect to port {0}".format(self.rpc_conn.port)
 		except AuthFailed:
-			self.window.infobar_label.set_text("Password rejected by CJDNS")
-			self.window.infobar.show()
+			pass
 
 		icon = {True: Gtk.STOCK_YES, False: Gtk.STOCK_NO}[connected]
 		self.window.status_icon.set_from_stock(icon, Gtk.IconSize.MENU)
@@ -93,6 +94,12 @@ class CaramelApplication(Gtk.Application):
 
 		peers_markup = "<span size='small'>" + (sub_status or '') + "</span>"
 		self.window.peers_label.set_markup(peers_markup)
+
+		self.window.infobar.set_visible(connected and not authenticated)
+
+		self.window.start_button.set_visible(not connected)
+		self.window.stop_button.set_visible(connected)
+		self.window.stop_button.set_sensitive(authenticated)
 
 		return True
 

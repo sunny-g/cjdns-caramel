@@ -24,35 +24,33 @@ class MainWindow(Gtk.Window):
 		menu_vbox.pack_start(self.build_menubar(), False, False, 0)
 		menu_vbox.pack_start(inner_vbox, True, True, 0)
 
+		inner_vbox.show()
+		menu_vbox.show()
+		self.show()
+
 		self.add(menu_vbox)
-		self.show_all()
-		self.update_infobar()
 
 	def build_notebook(self):
 		notebook = Gtk.Notebook()
 
 		notebook.append_page(self.build_status_page(), Gtk.Label("Status"))
-		notebook.append_page(Gtk.Label("Placeholder"), Gtk.Label("Peers"))
-		notebook.append_page(Gtk.Label("Placeholder"), Gtk.Label("Credentials"))
-		notebook.append_page(Gtk.Label("Placeholder"), Gtk.Label("Discovery"))
 
+		notebook.show()
 		return notebook
 
 	def build_infobar(self):
 		infobar = Gtk.InfoBar()
+		label = Gtk.Label("Password rejected by CJDNS")
+
+		infobar.get_content_area().add(label)
 		infobar.add_button("RPC Settings", Gtk.ResponseType.OK)
-		infobar.get_content_area().add(Gtk.Label())
 		infobar.connect("response",
 			lambda sender, response: self.open_rpc_settings(sender)
 		)
-		return infobar
 
-	def update_infobar(self):
-		if 'password' in self.app.rpc_settings:
-			self.infobar.hide()
-		else:
-			self.infobar_label.set_text("Password required to configure CJDNS")
-			self.infobar.show()
+		label.show()
+
+		return infobar
 
 	def build_menubar(self):
 		menubar = Gtk.MenuBar()
@@ -85,6 +83,8 @@ class MainWindow(Gtk.Window):
 			("_RPC Settings", None, self.open_rpc_settings)
 		))
 		
+		menubar.show_all()
+
 		return menubar
 
 	def build_status_page(self):
@@ -99,10 +99,13 @@ class MainWindow(Gtk.Window):
 		self.status_label.set_alignment(0, 0.5)
 		self.peers_label.set_alignment(0, 0.5)
 
-		button = Gtk.Button("Stop")
-		button.set_size_request(80, -1)
-		button.set_valign(Gtk.Align.START)
-		button.set_sensitive(False)
+		self.start_button = Gtk.Button("Start")
+		self.start_button.set_size_request(80, -1)
+		self.start_button.set_valign(Gtk.Align.START)
+
+		self.stop_button = Gtk.Button("Stop")
+		self.stop_button.set_size_request(80, -1)
+		self.stop_button.set_valign(Gtk.Align.START)
 
 		status_grid = Gtk.Grid()
 		status_grid.set_row_spacing(2)
@@ -114,12 +117,16 @@ class MainWindow(Gtk.Window):
 
 		status_hbox = Gtk.Box(orientation = Gtk.Orientation.HORIZONTAL, spacing = 10)
 		status_hbox.pack_start(status_grid, True, True, 0)
-		status_hbox.pack_start(button, False, False, 0)
+		status_hbox.pack_start(self.start_button, False, False, 0)
+		status_hbox.pack_start(self.stop_button, False, False, 0)
 
 		vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 10)
 		vbox.set_border_width(10)
 
 		vbox.pack_start(status_hbox, True, True, 0)
+
+		vbox.show_all()
+		self.stop_button.hide()
 
 		return vbox
 
@@ -150,7 +157,5 @@ class MainWindow(Gtk.Window):
 
 			self.app.reset_connection()
 			self.app.update_status()
-			self.update_infobar()
 
 		rpc_dialog.destroy()
-		
