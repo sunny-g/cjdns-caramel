@@ -1,7 +1,6 @@
 from gi.repository import Gtk
 
 from rpc_settings_window import RpcSettingsWindow
-import gnome_keyring as GnomeKeyring
 
 class MainWindow(Gtk.Window):
 	def __init__(self, app):

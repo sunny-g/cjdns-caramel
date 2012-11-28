@@ -10,7 +10,6 @@ from main_window import MainWindow
 
 from rpc_connection import *
 from cjdns_config import *
-import gnome_keyring as GnomeKeyring
 
 class CaramelApplication(Gtk.Application):
 	def __init__(self):
