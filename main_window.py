@@ -56,26 +56,34 @@ class MainWindow(Gtk.Window):
 			self.infobar.show()
 
 	def build_menubar(self):
+		menubar = Gtk.MenuBar()
+		accel_group = Gtk.AccelGroup()
+		self.add_accel_group(accel_group)
+
 		def build_menu(label, *items):
 			root_item = Gtk.MenuItem.new_with_mnemonic(label)
 			menu = Gtk.Menu()
 			root_item.set_submenu(menu)
 
-			for label, action in items:
+			for label, accel, action in items:
 				item = Gtk.MenuItem.new_with_mnemonic(label)
-				item.connect("activate", action)
+				item.connect('activate', action)
+
+				if accel is not None:
+					key, mod = Gtk.accelerator_parse(accel)
+					item.add_accelerator('activate', accel_group, key, mod, Gtk.AccelFlags.VISIBLE)
+				
 				menu.add(item)
 
 			return root_item
-
-		menubar = Gtk.MenuBar()
+		
 
 		menubar.add(build_menu("_File", 
-			("_Quit", lambda sender: self.destroy())
+			("_Quit", "<Control>Q", lambda sender: self.destroy())
 		))
 
 		menubar.add(build_menu("_Tools",
-			("_RPC Settings", self.open_rpc_settings)
+			("_RPC Settings", None, self.open_rpc_settings)
 		))
 		
 		return menubar
