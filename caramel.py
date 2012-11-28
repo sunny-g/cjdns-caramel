@@ -22,6 +22,7 @@ class CaramelApplication(Gtk.Application):
 		
 		self.cjdns_path = None
 		self.load_config()
+		
 		self.rpc_conn = None
 		self.reset_connection()
 
@@ -101,8 +102,6 @@ class CaramelApplication(Gtk.Application):
 		if self.rpc_conn is not None and self.rpc_conn.broken:
 			self.reset_connection()
 
-		connected = False
-		authenticated = False
 		configured = self.config is not None
 
 		main_status = "CJDNS is stopped"
@@ -111,22 +110,35 @@ class CaramelApplication(Gtk.Application):
 		try:
 			if self.rpc_conn.broken:
 				raise ConnectionError()
-			else:
-				if not self.rpc_conn.ping():
-					sub_status = "Ping was not returned"
-				else:
-					connected = True
-					main_status = "CJDNS is running"
 
-					if self.rpc_settings.get('password') is not None:
-						unique_nodes = self.rpc_conn.count_unique_nodes()
-						authenticated = True
-						sub_status = "{0} found".format(pluralize(unique_nodes, "node", "nodes"))
+			if not self.rpc_conn.ping():
+				raise PingNotReturned()
+
+			main_status = "CJDNS is running"
+			connected = True
+
+			if self.rpc_settings.get('password') is None:
+				raise MissingCredentials()
+
+			if not self.rpc_conn.test_auth():
+				raise AuthFailed()
+
+			authenticated = True
+
+			unique_nodes = self.rpc_conn.count_unique_nodes()
+			sub_status = "{0} found".format(pluralize(unique_nodes, "node", "nodes"))
 					
 		except ConnectionError:
+			connected = False
+			authenticated = False
 			sub_status = "Could not connect to port {0}".format(self.rpc_conn.port)
-		except AuthFailed:
-			pass
+		except PingNotReturned:
+			connected = False
+			authenticated = False
+			sub_status = "Ping was not returned"
+		except (AuthFailed, MissingCredentials):
+			connected = True
+			authenticated = False
 
 		icon = {True: Gtk.STOCK_YES, False: Gtk.STOCK_NO}[connected]
 		self.window.status_icon.set_from_stock(icon, Gtk.IconSize.MENU)

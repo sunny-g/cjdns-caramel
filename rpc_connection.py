@@ -3,10 +3,16 @@ import select
 import hashlib
 import bencoding
 
-class AuthFailed(Exception):
+class ConnectionError(Exception):
 	pass
 
-class ConnectionError(Exception):
+class PingNotReturned(Exception):
+	pass
+
+class MissingCredentials(Exception):
+	pass
+
+class AuthFailed(Exception):
 	pass
 
 class RpcConnection:
@@ -57,7 +63,7 @@ class RpcConnection:
 				raise ConnectionError()
 			response = bencoding.decode(response)
 
-			if self.check_auth_failed(response):
+			if self.check_respose_auth_failed(response):
 				raise AuthFailed()
 			else:
 				return response
@@ -90,8 +96,15 @@ class RpcConnection:
 
 		return dict
 
-	def check_auth_failed(self, response):
+	def check_respose_auth_failed(self, response):
 		return isinstance(response, dict) and ('error' in response) and (response['error'] == 'Auth failed.')
+
+	def test_auth(self):
+		try:
+			response = self.dump_routing_table(0)
+			return True
+		except AuthFailed:
+			return False
 
 	def ping(self):
 		try:
