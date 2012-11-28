@@ -8,8 +8,8 @@ class CjdnsConfig:
 		self.path = path
 		self.config = {}
 
-	def load(self):
-		config_file = open(self.path)
+	def load(self, path=None):
+		config_file = open(path or self.path)
 		string = config_file.read()
 		config_file.close()
 

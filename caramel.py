@@ -29,25 +29,39 @@ class CaramelApplication(Gtk.Application):
 		GLib.timeout_add_seconds(5, self.update_status)
 
 	def load_config(self):
+		# Default settings so we can check for CJDNS even if we don't
+		# know the password yet
 		self.rpc_settings = {'host': '127.0.0.1', 'port': 11234}
+		
 		self.config = None
-
 		config_path = os.path.expanduser("~/.config/cjdroute.conf")
 
 		if os.path.exists(config_path):
+			# Load existing cjdroute.conf
 			self.config = CjdnsConfig(config_path)
 			self.config.load()
 			self.rpc_settings = self.config.rpc_settings()
+
+			# Use cjdroute.conf to guess where the cjdns directory is
 			self.cjdns_path = os.path.dirname(self.config.config['corePath'])
 
 		elif self.cjdns_path is not None:
-			cjdroute_path = os.path.join(self.cjdns_path, 'cjdroute')
 			self.config = CjdnsConfig(config_path)
-			self.config.generate(cjdroute_path)
+
+			existing_config_path = os.path.join(self.cjdns_path, 'cjdroute.conf')
+			if os.path.exists(existing_config_path):
+				# Load the existing config file and save in new location
+				self.config.load(existing_config_path)
+			else:
+				# Use cjdroute to generate a new config file
+				cjdroute_path = os.path.join(self.cjdns_path, 'cjdroute')
+				self.config.generate(cjdroute_path)
+
 			self.config.save()
 			self.rpc_settings = self.config.rpc_settings()
 
 		else:
+			# Completely unconfigured, no idea where cjdroute is
 			self.window.cjdroute_path_infobar.show()
 
 	def start_cjdns(self):
@@ -137,9 +151,13 @@ class CaramelApplication(Gtk.Application):
 		response = dialog.run()
 
 		if response == Gtk.ResponseType.OK:
-			self.cjdns_path = dialog.get_filename()
-			self.load_config()
-			self.window.cjdroute_path_infobar.hide()
+			cjdns_path = dialog.get_filename()
+			cjdroute_path = os.path.join(cjdns_path, 'cjdroute')
+
+			if os.path.exists(cjdroute_path):
+				self.cjdns_path = cjdns_path
+				self.load_config()
+				self.window.cjdroute_path_infobar.hide()
 
 		dialog.destroy()
 
