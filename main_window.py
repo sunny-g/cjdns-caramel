@@ -12,12 +12,13 @@ class MainWindow(Gtk.Window):
 		self.set_position(Gtk.WindowPosition.CENTER)
 		self.set_size_request(500, 400)
 
-		self.infobar = self.build_infobar()
-		self.infobar_label = self.infobar.get_content_area().get_children()[0]
+		self.cjdroute_path_infobar = self.build_cjdroute_path_infobar()
+		self.auth_fail_infobar = self.build_auth_fail_infobar()
 
 		inner_vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 15)
 		inner_vbox.set_border_width(10)
-		inner_vbox.pack_start(self.infobar, False, False, 0)
+		inner_vbox.pack_start(self.cjdroute_path_infobar, False, False, 0)
+		inner_vbox.pack_start(self.auth_fail_infobar, False, False, 0)
 		inner_vbox.pack_start(self.build_notebook(), True, True, 0)
 
 		menu_vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 0)
@@ -38,19 +39,28 @@ class MainWindow(Gtk.Window):
 		notebook.show()
 		return notebook
 
-	def build_infobar(self):
+	def build_infobar(self, label_text, button_text, action):
 		infobar = Gtk.InfoBar()
-		label = Gtk.Label("Password rejected by CJDNS")
+		label = Gtk.Label(label_text)
+		label.set_use_markup(True)
 
 		infobar.get_content_area().add(label)
-		infobar.add_button("RPC Settings", Gtk.ResponseType.OK)
-		infobar.connect("response",
-			lambda sender, response: self.open_rpc_settings(sender)
-		)
+		infobar.add_button(button_text, Gtk.ResponseType.OK)
+		infobar.connect("response", action)
 
 		label.show()
 
 		return infobar
+
+	def build_auth_fail_infobar(self):
+		return self.build_infobar("Password rejected by CJDNS", "RPC Settings",
+			lambda sender, response: self.open_rpc_settings(sender)
+		)
+
+	def build_cjdroute_path_infobar(self):
+		return self.build_infobar("Could not find the <b>cjdroute</b> tool", "Locate CJDNS Folder",
+			lambda sender, response: self.app.locate_cjdroute()
+		)
 
 	def build_menubar(self):
 		menubar = Gtk.MenuBar()
@@ -151,11 +161,12 @@ class MainWindow(Gtk.Window):
 				'password': password
 			}
 
-			self.app.config.config['admin'].update({
-				'bind': "{0}:{1}".format(host, port),
-				'password': password
-			})
-			self.app.config.save()
+			if self.app.config is not None:
+				self.app.config.config['admin'].update({
+					'bind': "{0}:{1}".format(host, port),
+					'password': password
+				})
+				self.app.config.save()
 
 			self.app.reset_connection()
 			self.app.update_status()

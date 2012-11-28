@@ -16,31 +16,47 @@ class CaramelApplication(Gtk.Application):
 		Gtk.Application.__init__(self, application_id = 'info.cjdns.caramel')
 		self.connect("activate", self.activate)
 
+	def activate(self, data=None):
+		self.window = MainWindow(self)
+		self.add_window(self.window)
+		
+		self.cjdns_path = None
 		self.load_config()
 		self.rpc_conn = None
 		self.reset_connection()
 
+		self.update_status()
 		GLib.timeout_add_seconds(5, self.update_status)
 
-	def activate(self, data=None):
-		self.window = MainWindow(self)
-		self.add_window(self.window)
-		self.update_status()
-
 	def load_config(self):
-		current_dir = os.path.dirname(os.path.realpath(__file__))
-		config_path = os.path.join(current_dir, 'cjdroute.conf')
-		self.config = CjdnsConfig(config_path)
-		self.config.load_or_generate()
-		self.rpc_settings = self.config.rpc_settings()
+		self.rpc_settings = {'host': '127.0.0.1', 'port': 11234}
+		self.config = None
+
+		config_path = os.path.expanduser("~/.config/cjdroute.conf")
+
+		if os.path.exists(config_path):
+			self.config = CjdnsConfig(config_path)
+			self.config.load()
+			self.rpc_settings = self.config.rpc_settings()
+			self.cjdns_path = os.path.dirname(self.config.config['corePath'])
+
+		elif self.cjdns_path is not None:
+			cjdroute_path = os.path.join(self.cjdns_path, 'cjdroute')
+			self.config = CjdnsConfig(config_path)
+			self.config.generate(cjdroute_path)
+			self.config.save()
+			self.rpc_settings = self.config.rpc_settings()
+
+		else:
+			self.window.cjdroute_path_infobar.show()
 
 	def start_cjdns(self):
-		current_dir = os.path.dirname(os.path.realpath(__file__))
-		cjdroute = os.path.join(current_dir, 'cjdroute')
-		proc = subprocess.Popen(['pkexec', '--user', 'root', cjdroute], stdin=subprocess.PIPE,  close_fds=True)
+		cjdroute_path = os.path.join(self.cjdns_path, 'cjdroute')
+		proc = subprocess.Popen(['pkexec', '--user', 'root', cjdroute_path], stdin=subprocess.PIPE,  close_fds=True)
 
 		proc.stdin.write(self.config.dump().encode())
 		proc.stdin.close()
+		self.update_status()
 
 	def stop_cjdns(self):
 		if self.rpc_conn is not None:
@@ -48,14 +64,17 @@ class CaramelApplication(Gtk.Application):
 			self.update_status()
 
 	def reset_connection(self):
-		if self.rpc_conn:
+		if self.rpc_conn is not None:
 			self.rpc_conn.close()
 
-		self.rpc_conn = RpcConnection(
-			self.rpc_settings.get('host'),
-			self.rpc_settings.get('port'),
-			self.rpc_settings.get('password')
-		)
+		if self.rpc_settings is not None:
+			self.rpc_conn = RpcConnection(
+				self.rpc_settings.get('host'),
+				self.rpc_settings.get('port'),
+				self.rpc_settings.get('password')
+			)
+		else:
+			self.rpc_conn = RpcConnection()
 
 		return self.rpc_conn.connect()
 
@@ -65,7 +84,7 @@ class CaramelApplication(Gtk.Application):
 				word = plural
 			return "{0} {1}".format(count, word)
 
-		if self.rpc_conn.broken:
+		if self.rpc_conn is not None and self.rpc_conn.broken:
 			self.reset_connection()
 
 		connected = False
@@ -100,13 +119,29 @@ class CaramelApplication(Gtk.Application):
 		peers_markup = "<span size='small'>" + (sub_status or '') + "</span>"
 		self.window.peers_label.set_markup(peers_markup)
 
-		self.window.infobar.set_visible(connected and not authenticated)
+		self.window.auth_fail_infobar.set_visible(connected and not authenticated)
 
 		self.window.start_button.set_visible(not connected)
+		self.window.start_button.set_sensitive(self.config is not None)
+
 		self.window.stop_button.set_visible(connected)
 		self.window.stop_button.set_sensitive(authenticated)
 
 		return True
+
+	def locate_cjdroute(self):
+		dialog = Gtk.FileChooserDialog("Locate CJDNS folder", self.window, Gtk.FileChooserAction.SELECT_FOLDER)
+		dialog.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
+		dialog.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
+
+		response = dialog.run()
+
+		if response == Gtk.ResponseType.OK:
+			self.cjdns_path = dialog.get_filename()
+			self.load_config()
+			self.window.cjdroute_path_infobar.hide()
+
+		dialog.destroy()
 
 if __name__ == "__main__":
 	app = CaramelApplication()

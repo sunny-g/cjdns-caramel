@@ -18,14 +18,6 @@ class CjdnsConfig:
 		
 		return self.config
 
-	def load_or_generate(self):
-		if os.path.exists(self.path):
-			return self.load()
-		else:
-			self.generate()
-			self.save()
-			return self.config
-
 	def save(self):
 		config_file = open(self.path, 'w')
 		json.dump(self.config, config_file, indent=4)
@@ -34,12 +26,8 @@ class CjdnsConfig:
 	def dump(self):
 		return json.dumps(self.config, indent=4)
 
-	def generate(self):
-		current_dir = os.path.dirname(self.path)
-		cjdroute = os.path.join(current_dir, 'cjdroute')
-
-		proc = subprocess.Popen([cjdroute, '--genconf'], stdout=subprocess.PIPE)
-
+	def generate(self, cjdroute_path):
+		proc = subprocess.Popen([cjdroute_path, '--genconf'], stdout=subprocess.PIPE)
 		string = proc.stdout.read().decode('utf-8')
 		string = self.strip_comments(string)
 		self.config = json.loads(string)
