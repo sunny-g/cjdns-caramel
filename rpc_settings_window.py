@@ -32,12 +32,10 @@ class RpcSettingsWindow(Gtk.Dialog):
 		self.host_entry = Gtk.Entry()
 		self.port_entry = Gtk.Entry()
 		self.password_entry = Gtk.Entry()
-		self.save_pass_check = Gtk.CheckButton.new_with_label('Save password in keyring')
 
-		self.host_entry.set_text(rpc_settings.get('host', 'localhost'))
+		self.host_entry.set_text(rpc_settings.get('host', '127.0.0.1'))
 		self.port_entry.set_text(str(rpc_settings.get('port', 11234)))
 		self.password_entry.set_text(rpc_settings.get('password', ''))
-		self.save_pass_check.set_active(True)
 
 		self.host_entry.set_hexpand(True)
 
@@ -49,8 +47,6 @@ class RpcSettingsWindow(Gtk.Dialog):
 
 		grid.attach(password_label, 0, 2, 1, 1)
 		grid.attach(self.password_entry, 1, 2, 1, 1)
-
-		grid.attach(self.save_pass_check, 1, 3, 1, 1)
 
 
 		vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 10)

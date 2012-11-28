@@ -10,7 +10,7 @@ class ConnectionError(Exception):
 	pass
 
 class RpcConnection:
-	def __init__(self, host='localhost', port=11234, password=None):
+	def __init__(self, host='127.0.0.1', port=11234, password=None):
 		self.host = host
 		self.port = port
 		self.password = password

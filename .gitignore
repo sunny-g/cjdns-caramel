@@ -2,3 +2,5 @@ __pycache__
 *.pyc
 design
 admin_api
+cjdroute
+cjdroute.conf

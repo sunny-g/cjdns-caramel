@@ -128,39 +128,30 @@ class MainWindow(Gtk.Window):
 		rpc_dialog = RpcSettingsWindow(self, self.app.rpc_settings)
 		response = rpc_dialog.run()
 
-		try:
-			port = int(rpc_dialog.port_entry.get_text())
-		except ValueError:
-			port = 11234
-
 		if response == Gtk.ResponseType.OK:
+			host = rpc_dialog.host_entry.get_text()
+			password = rpc_dialog.password_entry.get_text()
+
+			try:
+				port = int(rpc_dialog.port_entry.get_text())
+			except ValueError:
+				port = 11234
+
 			self.app.rpc_settings = {
-				'host': rpc_dialog.host_entry.get_text(),
+				'host': host,
 				'port': port,
-				'password': rpc_dialog.password_entry.get_text()
+				'password': password
 			}
 
-			if rpc_dialog.save_pass_check.get_active():
-				GnomeKeyring.set(
-					'CJDNS Admin Password',
-					self.app.rpc_settings['password'],
-					{'key-type': 'cjdns-rpc-admin'}
-				)
+			self.app.config.config['admin'].update({
+				'bind': "{0}:{1}".format(host, port),
+				'password': password
+			})
+			self.app.config.save()
 
 			self.app.reset_connection()
 			self.app.update_status()
+			self.update_infobar()
 
 		rpc_dialog.destroy()
-		self.update_infobar()
-
-	def update_status_page(self, connected, main_status=None, sub_status=None):
-		if connected:
-			icon = Gtk.STOCK_YES
-		else:
-			icon = Gtk.STOCK_NO
-
-		self.status_icon.set_from_stock(icon, Gtk.IconSize.MENU)
-		self.status_label.set_markup('<b>' + (main_status or '') + '</b>')
-
-		peers_markup = "<span size='small'>" + (sub_status or '') + "</span>"
-		self.peers_label.set_markup(peers_markup)
+		

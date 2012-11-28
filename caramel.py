@@ -2,12 +2,14 @@
 
 import json
 import os.path
+import subprocess
 
 from gi.repository import GLib
 from gi.repository import Gtk
 from main_window import MainWindow
 
 from rpc_connection import *
+from cjdns_config import *
 import gnome_keyring as GnomeKeyring
 
 class CaramelApplication(Gtk.Application):
@@ -15,7 +17,7 @@ class CaramelApplication(Gtk.Application):
 		Gtk.Application.__init__(self, application_id = 'info.cjdns.caramel')
 		self.connect("activate", self.activate)
 
-		self.load_rpc_settings()
+		self.load_config()
 		self.rpc_conn = None
 		self.reset_connection()
 
@@ -26,26 +28,20 @@ class CaramelApplication(Gtk.Application):
 		self.add_window(self.window)
 		self.update_status()
 
-	def load_rpc_settings(self):
-		self.rpc_settings = {'host': 'localhost', 'port': 11234}
+	def load_config(self):
+		current_dir = os.path.dirname(os.path.realpath(__file__))
+		config_path = os.path.join(current_dir, 'cjdroute.conf')
+		self.config = CjdnsConfig(config_path)
+		self.config.load_or_generate()
+		self.rpc_settings = self.config.rpc_settings()
 
-		config_file = None
-		try:
-			config_file = open(os.path.expanduser('~/.cjdnsadmin'), 'r')
-			config = json.load(config_file)
-			self.rpc_settings = {
-				'host': str(config['addr']),
-				'port': int(config['port']),
-				'password': str(config['password'])
-			}
+	def start_cjdns(self):
+		current_dir = os.path.dirname(os.path.realpath(__file__))
+		cjdroute = os.path.join(current_dir, 'cjdroute')
+		proc = subprocess.Popen(['pkexec', '--user', 'root', cjdroute], stdin=subprocess.PIPE,  close_fds=True)
 
-		except:
-			password = GnomeKeyring.get({'key-type': 'cjdns-rpc-admin'})
-			if password is not None:
-				self.rpc_settings['password'] = password
-		finally:
-			if config_file is not None:
-				config_file.close()
+		proc.stdin.write(self.config.dump().encode())
+		proc.stdin.close()
 
 	def reset_connection(self):
 		if self.rpc_conn:
@@ -92,7 +88,12 @@ class CaramelApplication(Gtk.Application):
 			self.window.infobar_label.set_text("Password rejected by CJDNS")
 			self.window.infobar.show()
 
-		self.window.update_status_page(connected, main_status, sub_status)
+		icon = {True: Gtk.STOCK_YES, False: Gtk.STOCK_NO}[connected]
+		self.window.status_icon.set_from_stock(icon, Gtk.IconSize.MENU)
+		self.window.status_label.set_markup('<b>' + (main_status or '') + '</b>')
+
+		peers_markup = "<span size='small'>" + (sub_status or '') + "</span>"
+		self.window.peers_label.set_markup(peers_markup)
 
 		return True
 
