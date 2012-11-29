@@ -3,10 +3,11 @@ Caramel
 
 A graphical user interface for managing [CJDNS](https://github.com/cjdelisle/cjdns) using GTK+. Right now it is very work-in-progress.
 
-Screenshot
-----------
+Screenshots
+-----------
 
-![Screenshot of main window](http://cloud.github.com/downloads/duncanpk/cjdns-caramel/screenshot-2.png)
+![Screenshot of status page](http://cloud.github.com/downloads/duncanpk/cjdns-caramel/screenshot-3.png)  
+![Screenshot of credentials](http://cloud.github.com/downloads/duncanpk/cjdns-caramel/screenshot-5.png)
 
 Dependencies
 ------------
