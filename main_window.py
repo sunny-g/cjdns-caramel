@@ -10,7 +10,7 @@ class MainWindow(Gtk.Window):
 
 		self.set_title("CJDNS Configuration")
 		self.set_position(Gtk.WindowPosition.CENTER)
-		self.set_size_request(500, 400)
+		self.set_size_request(580, 400)
 
 		self.cjdroute_path_infobar = self.build_cjdroute_path_infobar()
 		self.auth_fail_infobar = self.build_auth_fail_infobar()
@@ -35,6 +35,7 @@ class MainWindow(Gtk.Window):
 		notebook = Gtk.Notebook()
 
 		notebook.append_page(self.build_status_page(), Gtk.Label("Status"))
+		notebook.append_page(self.build_credentials_page(), Gtk.Label("Credentials"))
 
 		notebook.show()
 		return notebook
@@ -141,6 +142,55 @@ class MainWindow(Gtk.Window):
 		self.stop_button.hide()
 
 		return vbox
+
+	def build_credentials_page(self):
+		def build_grid_row(row, label_text):
+			label = Gtk.Label("<b>{0}:</b>".format(label_text))
+			label.set_use_markup(True)
+
+			value = Gtk.Label()
+			value.set_selectable(True)
+
+			label.set_alignment(1, 0.5)
+			value.set_alignment(0, 0.5)
+			value.set_hexpand(False)
+			value.set_halign(Gtk.Align.FILL)
+
+			grid.attach(label, 0, row, 1, 1)
+			grid.attach(value, 1, row, 1, 1)
+
+			return value
+
+		grid = Gtk.Grid()
+		grid.set_row_spacing(4)
+		grid.set_column_spacing(10)
+
+		self.cjdns_ip_label = build_grid_row(0, "CJDNS IP")
+		self.public_key_label = build_grid_row(1, "Public Key")
+		# self.external_ip_label = build_grid_row(2, "External IP")
+		self.peering_port_label = build_grid_row(2, "Port")
+
+		vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 10)
+		vbox.set_border_width(10)
+		vbox.pack_start(grid, True, True, 0)
+		vbox.show_all()
+
+		return vbox
+
+	def update_credentials_page(self):
+		if self.app.config is None:
+			self.cjdns_ip_label.set_text('')
+			self.public_key_label.set_text('')
+			# self.external_ip_label.set_text('')
+			self.peering_port_label.set_text('')
+		else:
+			config = self.app.config.config
+			self.cjdns_ip_label.set_text(config['ipv6'])
+			self.public_key_label.set_text(config['publicKey'])
+
+			udp_bind_address = config['interfaces']['UDPInterface']['bind']
+			udp_bind_port = int(udp_bind_address.split(':')[1])
+			self.peering_port_label.set_text(str(udp_bind_port))
 
 	def open_rpc_settings(self, sender):
 		rpc_dialog = RpcSettingsWindow(self, self.app.rpc_settings)

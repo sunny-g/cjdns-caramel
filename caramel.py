@@ -65,6 +65,8 @@ class CaramelApplication(Gtk.Application):
 			# Completely unconfigured, no idea where cjdroute is
 			self.window.cjdroute_path_infobar.show()
 
+		self.window.update_credentials_page()
+
 	def start_cjdns(self):
 		cjdroute_path = os.path.join(self.cjdns_path, 'cjdroute')
 		proc = subprocess.Popen(['pkexec', '--user', 'root', cjdroute_path], stdin=subprocess.PIPE,  close_fds=True)
