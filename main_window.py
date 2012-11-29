@@ -145,7 +145,7 @@ class MainWindow(Gtk.Window):
 
 	def build_credentials_page(self):
 		def build_grid_row(row, label_text):
-			label = Gtk.Label("<b>{0}:</b>".format(label_text))
+			label = Gtk.Label("{0}:".format(label_text))
 			label.set_use_markup(True)
 
 			value = Gtk.Label()
@@ -161,18 +161,43 @@ class MainWindow(Gtk.Window):
 
 			return value
 
+		peering_info_label = Gtk.Label("<b>Peering Information:</b>")
+		peering_info_label.set_use_markup(True)
+		peering_info_label.set_alignment(0, 0.5)
+
 		grid = Gtk.Grid()
 		grid.set_row_spacing(4)
-		grid.set_column_spacing(10)
+		grid.set_column_spacing(8)
+		grid.set_margin_bottom(10)
 
 		self.cjdns_ip_label = build_grid_row(0, "CJDNS IP")
 		self.public_key_label = build_grid_row(1, "Public Key")
 		# self.external_ip_label = build_grid_row(2, "External IP")
 		self.peering_port_label = build_grid_row(2, "Port")
 
-		vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 10)
+		auth_passwords_label = Gtk.Label("<b>Authorized Passwords:</b>")
+		auth_passwords_label.set_use_markup(True)
+		auth_passwords_label.set_alignment(0, 0.5)
+
+		self.passwords_store = Gtk.ListStore(str)
+		self.passwords_view = Gtk.TreeView(self.passwords_store)
+		self.passwords_view.set_headers_visible(False)
+
+		scroll_view = Gtk.ScrolledWindow()
+		scroll_view.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+		scroll_view.set_shadow_type(Gtk.ShadowType.IN)
+		scroll_view.add(self.passwords_view)
+
+		renderer = Gtk.CellRendererText()
+		column = Gtk.TreeViewColumn("Password", renderer, text=0)
+		self.passwords_view.append_column(column)
+
+		vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 5)
 		vbox.set_border_width(10)
-		vbox.pack_start(grid, True, True, 0)
+		vbox.pack_start(peering_info_label, False, False, 0)
+		vbox.pack_start(grid, False, False, 0)
+		vbox.pack_start(auth_passwords_label, False, False, 0)
+		vbox.pack_start(scroll_view, True, True, 0)
 		vbox.show_all()
 
 		return vbox
@@ -191,6 +216,11 @@ class MainWindow(Gtk.Window):
 			udp_bind_address = config['interfaces']['UDPInterface']['bind']
 			udp_bind_port = int(udp_bind_address.split(':')[1])
 			self.peering_port_label.set_text(str(udp_bind_port))
+
+			self.passwords_store.clear()
+			for password_dict in config['authorizedPasswords']:
+				password = password_dict['password']
+				self.passwords_store.append([password])
 
 	def open_rpc_settings(self, sender):
 		rpc_dialog = RpcSettingsWindow(self, self.app.rpc_settings)
