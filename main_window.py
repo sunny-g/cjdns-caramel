@@ -179,20 +179,31 @@ class MainWindow(Gtk.Window):
 		auth_passwords_label.set_use_markup(True)
 		auth_passwords_label.set_alignment(0, 0.5)
 
-		self.passwords_store = Gtk.ListStore(str)
+		self.passwords_store = Gtk.ListStore(str, str, str)
 		self.passwords_view = Gtk.TreeView(self.passwords_store)
-		self.passwords_view.set_headers_visible(False)
+		self.passwords_view.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
 
 		scroll_view = Gtk.ScrolledWindow()
-		scroll_view.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+		scroll_view.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
 		scroll_view.set_shadow_type(Gtk.ShadowType.IN)
 		scroll_view.add(self.passwords_view)
 
-		renderer = Gtk.CellRendererText()
-		column = Gtk.TreeViewColumn("Password", renderer, text=0)
-		self.passwords_view.append_column(column)
+		password_renderer = Gtk.CellRendererText()
+		name_renderer = Gtk.CellRendererText()
+		location_renderer = Gtk.CellRendererText()
 
-		vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 5)
+		# name_renderer.set_fixed_size(130, -1)
+		# location_renderer.set_fixed_size(130, -1)
+
+		password_column = Gtk.TreeViewColumn("Password", password_renderer, text=0)
+		name_column = Gtk.TreeViewColumn("Name", name_renderer, text=1)
+		location_column = Gtk.TreeViewColumn("Location", location_renderer, text=2)
+
+		self.passwords_view.append_column(password_column)
+		self.passwords_view.append_column(name_column)
+		self.passwords_view.append_column(location_column)
+
+		vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing=5)
 		vbox.set_border_width(10)
 		vbox.pack_start(peering_info_label, False, False, 0)
 		vbox.pack_start(grid, False, False, 0)
@@ -220,7 +231,10 @@ class MainWindow(Gtk.Window):
 			self.passwords_store.clear()
 			for password_dict in config['authorizedPasswords']:
 				password = password_dict['password']
-				self.passwords_store.append([password])
+				name = password_dict.get('name')
+				location = password_dict.get('location')
+
+				self.passwords_store.append([password, name, location])
 
 	def open_rpc_settings(self, sender):
 		rpc_dialog = RpcSettingsWindow(self, self.app.rpc_settings)
