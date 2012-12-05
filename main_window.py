@@ -172,8 +172,6 @@ class MainWindow(Gtk.Window):
 
 		self.cjdns_ip_label = build_grid_row(0, "CJDNS IP")
 		self.public_key_label = build_grid_row(1, "Public Key")
-		# self.external_ip_label = build_grid_row(2, "External IP")
-		self.peering_port_label = build_grid_row(2, "Port")
 
 		auth_passwords_label = Gtk.Label("<b>Authorized Passwords:</b>")
 		auth_passwords_label.set_use_markup(True)
@@ -223,10 +221,6 @@ class MainWindow(Gtk.Window):
 			config = self.app.config.config
 			self.cjdns_ip_label.set_text(config['ipv6'])
 			self.public_key_label.set_text(config['publicKey'])
-
-			udp_bind_address = config['interfaces']['UDPInterface']['bind']
-			udp_bind_port = int(udp_bind_address.split(':')[1])
-			self.peering_port_label.set_text(str(udp_bind_port))
 
 			self.passwords_store.clear()
 			for password_dict in config['authorizedPasswords']:
