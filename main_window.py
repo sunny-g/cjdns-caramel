@@ -190,8 +190,13 @@ class MainWindow(Gtk.Window):
 		name_renderer = Gtk.CellRendererText()
 		location_renderer = Gtk.CellRendererText()
 
-		# name_renderer.set_fixed_size(130, -1)
-		# location_renderer.set_fixed_size(130, -1)
+		password_renderer.set_property('editable', True)
+		name_renderer.set_property('editable', True)
+		location_renderer.set_property('editable', True)
+
+		password_renderer.connect('edited', self.password_edited)
+		name_renderer.connect('edited', self.name_edited)
+		location_renderer.connect('edited', self.location_edited)
 
 		password_column = Gtk.TreeViewColumn("Password", password_renderer, text=0)
 		name_column = Gtk.TreeViewColumn("Name", name_renderer, text=1)
@@ -210,6 +215,32 @@ class MainWindow(Gtk.Window):
 		vbox.show_all()
 
 		return vbox
+
+	def password_edited(self, widget, path, text):
+		self.passwords_store[path][0] = text
+		self.update_config_authorized_passwords()
+
+	def name_edited(self, widget, path, text):
+		self.passwords_store[path][1] = text
+		self.update_config_authorized_passwords()
+
+	def location_edited(self, widget, path, text):
+		self.passwords_store[path][2] = text
+		self.update_config_authorized_passwords()
+
+	def update_config_authorized_passwords(self):
+		config_dict = self.app.config.config
+		config_dict['authorizedPasswords'] = []
+
+		for row in self.passwords_store:
+			password_dict = {}
+			password_dict['password'] = row[0]
+			if row[1]: password_dict['name'] = row[1]
+			if row[2]: password_dict['location'] = row[2]
+
+			config_dict['authorizedPasswords'].append(password_dict)
+
+		self.app.config.save()
 
 	def update_credentials_page(self):
 		if self.app.config is None:
