@@ -46,7 +46,7 @@ class CaramelApplication(Gtk.Application):
 		else:
 			self.rpc_settings = self.config.rpc_settings()
 
-		self.window.update_credentials_page()
+		self.window.credentials_page.update()
 
 	def load_config(self, config_path):
 		self.config = CjdnsConfig(config_path)
