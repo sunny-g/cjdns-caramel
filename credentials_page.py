@@ -51,11 +51,25 @@ class CredentialsPage(Gtk.Box):
 		self.passwords_view.append_column(name_column)
 		self.passwords_view.append_column(location_column)
 
+		scroll_view_toolbar = Gtk.Toolbar()
+		scroll_view_toolbar.set_can_focus(False)
+		scroll_view_toolbar.set_icon_size(Gtk.IconSize.MENU)
+
+		add_password_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ADD)
+		scroll_view_toolbar.add(add_password_button)
+
+		remove_password_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_REMOVE)
+		scroll_view_toolbar.add(remove_password_button)
+
+		scroll_view_vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 0)
+		scroll_view_vbox.pack_start(scroll_view, True, True, 0)
+		scroll_view_vbox.pack_start(scroll_view_toolbar, False, False, 0)
+
 		self.set_border_width(10)
 		self.pack_start(peering_info_label, False, False, 0)
 		self.pack_start(self.grid, False, False, 0)
 		self.pack_start(auth_passwords_label, False, False, 0)
-		self.pack_start(scroll_view, True, True, 0)
+		self.pack_start(scroll_view_vbox, True, True, 0)
 		self.show_all()
 
 	def build_grid_row(self, row, label_text):
