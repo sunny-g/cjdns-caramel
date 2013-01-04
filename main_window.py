@@ -22,15 +22,10 @@ class MainWindow(Gtk.Window):
 		inner_vbox.pack_start(self.auth_fail_infobar, False, False, 0)
 		inner_vbox.pack_start(self.build_notebook(), True, True, 0)
 
-		menu_vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 0)
-		menu_vbox.pack_start(self.build_menubar(), False, False, 0)
-		menu_vbox.pack_start(inner_vbox, True, True, 0)
-
 		inner_vbox.show()
-		menu_vbox.show()
+		
+		self.add(inner_vbox)
 		self.show()
-
-		self.add(menu_vbox)
 
 	def build_notebook(self):
 		notebook = Gtk.Notebook()
@@ -65,41 +60,6 @@ class MainWindow(Gtk.Window):
 		return self.build_infobar("Could not find the <b>cjdroute</b> tool", "Locate CJDNS Folder",
 			lambda sender, response: self.app.locate_cjdroute()
 		)
-
-	def build_menubar(self):
-		menubar = Gtk.MenuBar()
-		accel_group = Gtk.AccelGroup()
-		self.add_accel_group(accel_group)
-
-		def build_menu(label, *items):
-			root_item = Gtk.MenuItem.new_with_mnemonic(label)
-			menu = Gtk.Menu()
-			root_item.set_submenu(menu)
-
-			for label, accel, action in items:
-				item = Gtk.MenuItem.new_with_mnemonic(label)
-				item.connect('activate', action)
-
-				if accel is not None:
-					key, mod = Gtk.accelerator_parse(accel)
-					item.add_accelerator('activate', accel_group, key, mod, Gtk.AccelFlags.VISIBLE)
-				
-				menu.add(item)
-
-			return root_item
-		
-
-		menubar.add(build_menu("_File", 
-			("_Quit", "<Control>Q", lambda sender: self.destroy())
-		))
-
-		menubar.add(build_menu("_Tools",
-			("_RPC Settings", None, self.open_rpc_settings)
-		))
-		
-		menubar.show_all()
-
-		return menubar
 
 	def build_status_page(self):
 		self.status_icon = Gtk.Image.new_from_stock(Gtk.STOCK_NO, Gtk.IconSize.MENU)
