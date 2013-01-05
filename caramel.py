@@ -21,6 +21,7 @@ class CaramelApplication(Gtk.Application):
 		self.add_window(self.window)
 		
 		self.cjdns_path = None
+		self.cjdroute_path = None
 		self.load_or_create_config()
 		
 		self.rpc_conn = None
@@ -54,6 +55,7 @@ class CaramelApplication(Gtk.Application):
 
 		# Use cjdroute.conf to guess where the cjdns directory is
 		self.cjdns_path = os.path.dirname(self.config.config['corePath'])
+		self.cjdroute_path = os.path.join(self.cjdns_path, 'cjdroute')
 
 	def create_config(self, config_path):
 		self.config = CjdnsConfig(config_path)
@@ -64,10 +66,18 @@ class CaramelApplication(Gtk.Application):
 			self.config.load(existing_config_path)
 		else:
 			# Use cjdroute to generate a new config file
-			cjdroute_path = os.path.join(self.cjdns_path, 'cjdroute')
-			self.config.generate(cjdroute_path)
+			self.config.generate(self.cjdroute_path)
 
 		self.config.save()
+
+	def generate_authorized_password(self):
+		if self.cjdroute_path is None:
+			return None
+
+		temp_config = CjdnsConfig(None)
+		temp_config.generate(self.cjdroute_path)
+
+		return temp_config.config['authorizedPasswords'][0]['password']
 
 	def start_cjdns(self):
 		cjdroute_path = os.path.join(self.cjdns_path, 'cjdroute')

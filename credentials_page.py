@@ -10,10 +10,10 @@ class CredentialsPage(Gtk.Box):
 		peering_info_label.set_use_markup(True)
 		peering_info_label.set_alignment(0, 0.5)
 
-		self.grid = Gtk.Grid()
-		self.grid.set_row_spacing(4)
-		self.grid.set_column_spacing(8)
-		self.grid.set_margin_bottom(10)
+		self.peer_info_grid = Gtk.Grid()
+		self.peer_info_grid.set_row_spacing(4)
+		self.peer_info_grid.set_column_spacing(8)
+		self.peer_info_grid.set_margin_bottom(10)
 
 		self.cjdns_ip_label = self.build_grid_row(0, "CJDNS IP")
 		self.public_key_label = self.build_grid_row(1, "Public Key")
@@ -22,14 +22,14 @@ class CredentialsPage(Gtk.Box):
 		auth_passwords_label.set_use_markup(True)
 		auth_passwords_label.set_alignment(0, 0.5)
 
-		self.passwords_store = Gtk.ListStore(str, str, str)
+		self.passwords_store = Gtk.ListStore(int, str, str, str)
 		self.passwords_view = Gtk.TreeView(self.passwords_store)
 		self.passwords_view.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
 
-		scroll_view = Gtk.ScrolledWindow()
-		scroll_view.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-		scroll_view.set_shadow_type(Gtk.ShadowType.IN)
-		scroll_view.add(self.passwords_view)
+		passwords_scroll = Gtk.ScrolledWindow()
+		passwords_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+		passwords_scroll.set_shadow_type(Gtk.ShadowType.IN)
+		passwords_scroll.add(self.passwords_view)
 
 		password_renderer = Gtk.CellRendererText()
 		name_renderer = Gtk.CellRendererText()
@@ -39,37 +39,39 @@ class CredentialsPage(Gtk.Box):
 		name_renderer.set_property('editable', True)
 		location_renderer.set_property('editable', True)
 
-		password_renderer.connect('edited', self.password_edited)
-		name_renderer.connect('edited', self.name_edited)
-		location_renderer.connect('edited', self.location_edited)
+		password_renderer.connect('edited', self.password_row_edited('password', 1))
+		name_renderer.connect('edited', self.password_row_edited('name', 2))
+		location_renderer.connect('edited', self.password_row_edited('location', 3))
 
-		password_column = Gtk.TreeViewColumn("Password", password_renderer, text=0)
-		name_column = Gtk.TreeViewColumn("Name", name_renderer, text=1)
-		location_column = Gtk.TreeViewColumn("Location", location_renderer, text=2)
+		password_column = Gtk.TreeViewColumn("Password", password_renderer, text=1)
+		name_column = Gtk.TreeViewColumn("Name", name_renderer, text=2)
+		location_column = Gtk.TreeViewColumn("Location", location_renderer, text=3)
 
 		self.passwords_view.append_column(password_column)
 		self.passwords_view.append_column(name_column)
 		self.passwords_view.append_column(location_column)
 
-		scroll_view_toolbar = Gtk.Toolbar()
-		scroll_view_toolbar.set_can_focus(False)
-		scroll_view_toolbar.set_icon_size(Gtk.IconSize.MENU)
+		passwords_toolbar = Gtk.Toolbar()
+		passwords_toolbar.set_can_focus(False)
+		passwords_toolbar.set_icon_size(Gtk.IconSize.MENU)
 
 		add_password_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ADD)
-		scroll_view_toolbar.add(add_password_button)
+		add_password_button.connect('clicked', self.add_password)
+		passwords_toolbar.add(add_password_button)
 
 		remove_password_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_REMOVE)
-		scroll_view_toolbar.add(remove_password_button)
+		remove_password_button.connect('clicked', self.remove_password)
+		passwords_toolbar.add(remove_password_button)
 
-		scroll_view_vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 0)
-		scroll_view_vbox.pack_start(scroll_view, True, True, 0)
-		scroll_view_vbox.pack_start(scroll_view_toolbar, False, False, 0)
+		passwords_vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 0)
+		passwords_vbox.pack_start(passwords_scroll, True, True, 0)
+		passwords_vbox.pack_start(passwords_toolbar, False, False, 0)
 
 		self.set_border_width(10)
 		self.pack_start(peering_info_label, False, False, 0)
-		self.pack_start(self.grid, False, False, 0)
+		self.pack_start(self.peer_info_grid, False, False, 0)
 		self.pack_start(auth_passwords_label, False, False, 0)
-		self.pack_start(scroll_view_vbox, True, True, 0)
+		self.pack_start(passwords_vbox, True, True, 0)
 		self.show_all()
 
 	def build_grid_row(self, row, label_text):
@@ -84,36 +86,43 @@ class CredentialsPage(Gtk.Box):
 		value.set_hexpand(False)
 		value.set_halign(Gtk.Align.FILL)
 
-		self.grid.attach(label, 0, row, 1, 1)
-		self.grid.attach(value, 1, row, 1, 1)
+		self.peer_info_grid.attach(label, 0, row, 1, 1)
+		self.peer_info_grid.attach(value, 1, row, 1, 1)
 
 		return value
 
-	def password_edited(self, widget, path, text):
-		self.passwords_store[path][0] = text
-		self.update_app_config()
+	def password_row_edited(self, field_name, field_index):
+		def callback(widget, path, text):
+			self.passwords_store[path][field_index] = text
+			row = self.passwords_store[path][0]
+			self.app.config.config['authorizedPasswords'][row][field_name] = text
+			self.app.config.save()
+		return callback
 
-	def name_edited(self, widget, path, text):
-		self.passwords_store[path][1] = text
-		self.update_app_config()
+	def add_password(self, widget):
+		index = len(self.passwords_store)
 
-	def location_edited(self, widget, path, text):
-		self.passwords_store[path][2] = text
-		self.update_app_config()
+		try:
+			password = self.app.generate_authorized_password()
+		except:
+			password = None
 
-	def update_app_config(self):
-		app_config = self.app.config
-		app_config.config['authorizedPasswords'] = []
+		iter = self.passwords_store.append([index, password, None, None])
+		self.passwords_view.get_selection().select_iter(iter)
 
-		for row in self.passwords_store:
-			password_dict = {}
-			password_dict['password'] = row[0]
-			if row[1]: password_dict['name'] = row[1]
-			if row[2]: password_dict['location'] = row[2]
+		self.app.config.config['authorizedPasswords'].append({'password': password})
+		self.app.config.save()
 
-			app_config.config['authorizedPasswords'].append(password_dict)
+	def remove_password(self, widget):
+		if len(self.passwords_store) > 0:
+			(model, iter) = self.passwords_view.get_selection().get_selected()
 
-		app_config.save()
+			if iter is not None:
+				config_index = self.passwords_store[iter][0]
+				self.passwords_store.remove(iter)
+				self.app.config.config['authorizedPasswords'].pop(config_index)
+				self.app.config.save()
+				self.update()
 
 	def update(self):
 		if self.app.config is None:
@@ -125,9 +134,9 @@ class CredentialsPage(Gtk.Box):
 			self.public_key_label.set_text(config['publicKey'])
 
 			self.passwords_store.clear()
-			for password_dict in config['authorizedPasswords']:
+			for index, password_dict in enumerate(config['authorizedPasswords']):
 				password = password_dict['password']
 				name = password_dict.get('name')
 				location = password_dict.get('location')
 
-				self.passwords_store.append([password, name, location])
+				self.passwords_store.append([index, password, name, location])
