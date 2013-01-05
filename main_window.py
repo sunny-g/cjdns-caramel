@@ -17,7 +17,7 @@ class MainWindow(Gtk.Window):
 		self.auth_fail_infobar = self.build_auth_fail_infobar()
 
 		inner_vbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 15)
-		inner_vbox.set_border_width(10)
+		# inner_vbox.set_border_width(10)
 		inner_vbox.pack_start(self.cjdroute_path_infobar, False, False, 0)
 		inner_vbox.pack_start(self.auth_fail_infobar, False, False, 0)
 		inner_vbox.pack_start(self.build_notebook(), True, True, 0)
