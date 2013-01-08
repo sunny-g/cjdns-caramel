@@ -20,11 +20,11 @@ class CjdnsConfig:
 
 	def save(self):
 		config_file = open(self.path, 'w')
-		json.dump(self.config, config_file, indent=4)
+		json.dump(self.config, config_file, sort_keys=True, indent=4)
 		config_file.close()
 
 	def dump(self):
-		return json.dumps(self.config, indent=4)
+		return json.dumps(self.config, sort_keys=True, indent=4)
 
 	def generate(self, cjdroute_path):
 		proc = subprocess.Popen([cjdroute_path, '--genconf'], stdout=subprocess.PIPE)
