@@ -57,7 +57,7 @@ class MainWindow(Gtk.Window):
 		)
 
 	def build_cjdroute_path_infobar(self):
-		return self.build_infobar("Could not find the <b>cjdroute</b> tool", "Locate CJDNS Folder",
+		return self.build_infobar("Could not find the <b>cjdroute</b> tool", "Locate cjdroute",
 			lambda sender, response: self.app.locate_cjdroute()
 		)
 

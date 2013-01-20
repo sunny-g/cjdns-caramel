@@ -20,7 +20,6 @@ class CaramelApplication(Gtk.Application):
 		self.window = MainWindow(self)
 		self.add_window(self.window)
 		
-		self.cjdns_path = None
 		self.cjdroute_path = None
 		self.load_or_create_config()
 		
@@ -36,7 +35,7 @@ class CaramelApplication(Gtk.Application):
 
 		if os.path.exists(config_path):
 			self.load_config(config_path)
-		elif self.cjdns_path is not None:
+		elif self.cjdroute_path is not None:
 			self.create_config(config_path)
 		else:
 			# Completely unconfigured, no idea where cjdroute is
@@ -54,20 +53,12 @@ class CaramelApplication(Gtk.Application):
 		self.config.load()
 
 		# Use cjdroute.conf to guess where the cjdns directory is
-		self.cjdns_path = os.path.dirname(self.config.config['corePath'])
-		self.cjdroute_path = os.path.join(self.cjdns_path, 'cjdroute')
+		self.cjdroute_path = self.config.config.get('cjdroutePath')
 
 	def create_config(self, config_path):
 		self.config = CjdnsConfig(config_path)
-		existing_config_path = os.path.join(self.cjdns_path, 'cjdroute.conf')
-		
-		if os.path.exists(existing_config_path):
-			# Migrate the existing config file
-			self.config.load(existing_config_path)
-		else:
-			# Use cjdroute to generate a new config file
-			self.config.generate(self.cjdroute_path)
-
+		self.config.generate(self.cjdroute_path)
+		self.config.config['cjdroutePath'] = self.cjdroute_path
 		self.config.save()
 
 	def generate_authorized_password(self):
@@ -80,8 +71,7 @@ class CaramelApplication(Gtk.Application):
 		return temp_config.config['authorizedPasswords'][0]['password']
 
 	def start_cjdns(self):
-		cjdroute_path = os.path.join(self.cjdns_path, 'cjdroute')
-		proc = subprocess.Popen(['pkexec', '--user', 'root', cjdroute_path], stdin=subprocess.PIPE,  close_fds=True)
+		proc = subprocess.Popen(['pkexec', '--user', 'root', self.cjdroute_path], stdin=subprocess.PIPE,  close_fds=True)
 
 		proc.stdin.write(self.config.dump().encode())
 		proc.stdin.close()
@@ -162,7 +152,7 @@ class CaramelApplication(Gtk.Application):
 		self.window.auth_fail_infobar.set_visible(connected and configured and not authenticated)
 
 		self.window.start_button.set_visible(not connected)
-		self.window.start_button.set_sensitive(self.config is not None)
+		self.window.start_button.set_sensitive(configured and (self.cjdroute_path is not None))
 
 		self.window.stop_button.set_visible(connected)
 		self.window.stop_button.set_sensitive(authenticated)
@@ -170,22 +160,18 @@ class CaramelApplication(Gtk.Application):
 		return True
 
 	def locate_cjdroute(self):
-		dialog = Gtk.FileChooserDialog("Locate CJDNS folder", self.window, Gtk.FileChooserAction.SELECT_FOLDER)
+		dialog = Gtk.FileChooserDialog("Locate cjdroute executable", self.window, Gtk.FileChooserAction.OPEN)
 		dialog.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
 		dialog.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
 
 		response = dialog.run()
 
 		if response == Gtk.ResponseType.OK:
-			cjdns_path = dialog.get_filename()
-			cjdroute_path = os.path.join(cjdns_path, 'cjdroute')
-
-			if os.path.exists(cjdroute_path):
-				self.window.cjdroute_path_infobar.hide()
-				self.cjdns_path = cjdns_path
-				self.load_or_create_config()
-				self.reset_connection()
-				self.update_status()
+			self.window.cjdroute_path_infobar.hide()
+			self.cjdroute_path = dialog.get_filename()
+			self.load_or_create_config()
+			self.reset_connection()
+			self.update_status()
 
 		dialog.destroy()
 
