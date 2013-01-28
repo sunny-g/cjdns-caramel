@@ -21,7 +21,7 @@ class RpcConnection:
 		self.port = port
 		self.password = password
 
-		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self.sock.settimeout(0.1)
 		self.connected = False
 		self.broken = False
