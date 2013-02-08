@@ -55,11 +55,16 @@ class CredentialsPage(Gtk.Box):
 		passwords_toolbar.set_can_focus(False)
 		passwords_toolbar.set_icon_size(Gtk.IconSize.MENU)
 
-		add_password_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ADD)
+		style_context = passwords_toolbar.get_style_context()
+		style_context.add_class(Gtk.STYLE_CLASS_INLINE_TOOLBAR)
+
+		add_password_button = Gtk.ToolButton()
+		add_password_button.set_icon_name('list-add-symbolic')
 		add_password_button.connect('clicked', self.add_password)
 		passwords_toolbar.add(add_password_button)
 
-		remove_password_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_REMOVE)
+		remove_password_button = Gtk.ToolButton()
+		remove_password_button.set_icon_name('list-remove-symbolic')
 		remove_password_button.connect('clicked', self.remove_password)
 		passwords_toolbar.add(remove_password_button)
 
