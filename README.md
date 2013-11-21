@@ -2,6 +2,7 @@ Caramel
 =======
 
 A graphical user interface for managing [CJDNS](https://github.com/cjdelisle/cjdns) using GTK+. Right now it is very work-in-progress.
+(note: I am not the original author, but since the original repo has been deleted, this one will stay here). 
 
 Screenshots
 -----------
